@@ -1,3 +1,26 @@
+# Two ways to use this file:
+#
+#   Local development (PHP + Vite on your machine, database in Docker):
+#     docker compose up -d                 -> starts pgsql + redis only
+#
+#   Whole app in containers (nothing but Docker needed):
+#     docker compose --profile app up -d --build
+#     -> http://localhost:8000 (change with APP_PORT)
+
+x-app-env: &app-env
+  APP_ENV: ${APP_ENV:-production}
+  APP_DEBUG: ${APP_DEBUG:-false}
+  APP_URL: http://localhost:${APP_PORT:-8000}
+  DB_CONNECTION: pgsql
+  DB_HOST: pgsql
+  DB_PORT: 5432
+  REDIS_HOST: redis
+  CACHE_STORE: redis
+  QUEUE_CONNECTION: redis
+  SESSION_DRIVER: redis
+  REDIS_CLIENT: phpredis
+  LOG_CHANNEL: stderr
+
 services:
   pgsql:
     image: postgres:17-alpine
@@ -25,6 +48,50 @@ services:
       - "${FORWARD_REDIS_PORT:-6379}:6379"
     volumes:
       - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app:
+    profiles: [app]
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: app
+    image: clinicflow-app
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      <<: *app-env
+      SEED_DEMO_DATA: ${SEED_DEMO_DATA:-true}
+    depends_on:
+      pgsql: { condition: service_healthy }
+      redis: { condition: service_healthy }
+
+  queue:
+    profiles: [app]
+    image: clinicflow-app
+    restart: unless-stopped
+    command: ["php", "artisan", "queue:work", "--tries=3", "--max-time=3600"]
+    env_file: .env
+    environment:
+      <<: *app-env
+    depends_on:
+      - app
+
+  web:
+    profiles: [app]
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: web
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8000}:80"
+    depends_on:
+      - app
 
 volumes:
   pgdata:

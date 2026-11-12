@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import Heading from '@/components/Heading.vue';
+import PageHeading from '@/components/PageHeading.vue';
 import PatientForm from '@/components/patients/PatientForm.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
@@ -31,7 +31,7 @@ const submit = () => form.post(route('patients.store'));
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="max-w-3xl space-y-6 p-4 md:p-6">
-            <Heading title="Add patient" description="Create a new patient record for your clinic" />
+            <PageHeading title="Add patient" description="Create a new patient record for your clinic" />
             <PatientForm :form="form" :can-edit-notes="canEditNotes" submit-label="Save patient" @submit="submit" />
         </div>
     </AppLayout>

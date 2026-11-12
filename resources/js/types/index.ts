@@ -3,6 +3,7 @@ import type { LucideIcon } from 'lucide-vue-next';
 export interface Auth {
     user: User;
     clinic: Clinic | null;
+    can: { manageClinic: boolean };
 }
 
 export interface BreadcrumbItem {

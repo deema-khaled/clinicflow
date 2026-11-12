@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import Heading from '@/components/Heading.vue';
+import PageHeading from '@/components/PageHeading.vue';
 import DeletePatientDialog from '@/components/patients/DeletePatientDialog.vue';
 import PatientForm from '@/components/patients/PatientForm.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -38,7 +38,7 @@ const submit = () => form.put(route('patients.update', props.patient.id));
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="max-w-3xl space-y-6 p-4 md:p-6">
-            <Heading :title="fullName" description="Update this patient's details" />
+            <PageHeading :title="fullName" description="Update this patient's details" />
             <PatientForm :form="form" :can-edit-notes="canEditNotes" submit-label="Save changes" @submit="submit" />
 
             <div v-if="canDelete" class="space-y-3 rounded-lg border border-red-200 p-4 dark:border-red-900">

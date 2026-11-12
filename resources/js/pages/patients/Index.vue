@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import Heading from '@/components/Heading.vue';
+import PageHeading from '@/components/PageHeading.vue';
 import DeletePatientDialog from '@/components/patients/DeletePatientDialog.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/AppLayout.vue';
-import type { BreadcrumbItem, SharedData } from '@/types';
+import type { BreadcrumbItem } from '@/types';
 import type { Paginated, PatientListItem } from '@/types/patient';
-import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { CheckCircle2, Pencil, Plus, Search, Users } from 'lucide-vue-next';
+import { Head, Link, router } from '@inertiajs/vue3';
+import { CalendarPlus, Pencil, Plus, Search, Users } from 'lucide-vue-next';
 import { onBeforeUnmount, ref, watch } from 'vue';
 
 const props = defineProps<{
@@ -18,7 +18,6 @@ const props = defineProps<{
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Patients', href: '/patients' }];
 
-const page = usePage<SharedData>();
 const search = ref(props.filters.search);
 
 // Debounced server-side search; keeps the input focused and the URL shareable.
@@ -44,22 +43,13 @@ const genderLabel = (gender: string | null) => (gender ? gender[0].toUpperCase()
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex flex-1 flex-col gap-6 p-4 md:p-6">
             <div class="flex flex-wrap items-start justify-between gap-4">
-                <Heading
+                <PageHeading
                     title="Patients"
                     :description="`${patients.total} patient${patients.total === 1 ? '' : 's'} ${filters.search ? 'matching your search' : 'in your clinic'}`"
                 />
                 <Button as-child>
                     <Link :href="route('patients.create')"><Plus class="h-4 w-4" /> Add patient</Link>
                 </Button>
-            </div>
-
-            <div
-                v-if="page.props.flash.success"
-                class="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800 dark:border-green-900 dark:bg-green-950 dark:text-green-200"
-                role="status"
-            >
-                <CheckCircle2 class="h-4 w-4 shrink-0" />
-                {{ page.props.flash.success }}
             </div>
 
             <div class="relative max-w-sm">
@@ -88,6 +78,14 @@ const genderLabel = (gender: string | null) => (gender ? gender[0].toUpperCase()
                             <td class="hidden px-4 py-3 sm:table-cell">{{ genderLabel(patient.gender) }}</td>
                             <td class="px-4 py-3">
                                 <div class="flex justify-end gap-1">
+                                    <Button variant="ghost" size="sm" as-child>
+                                        <Link
+                                            :href="route('appointments.create', { patient: patient.id })"
+                                            :aria-label="`Book appointment for ${patient.full_name}`"
+                                        >
+                                            <CalendarPlus class="h-4 w-4" />
+                                        </Link>
+                                    </Button>
                                     <Button variant="ghost" size="sm" as-child>
                                         <Link :href="route('patients.edit', patient.id)" :aria-label="`Edit ${patient.full_name}`">
                                             <Pencil class="h-4 w-4" />

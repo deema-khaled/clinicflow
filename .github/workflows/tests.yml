@@ -2,55 +2,70 @@ name: tests
 
 on:
   push:
-    branches:
-      - develop
-      - main
+    branches: [main, develop]
   pull_request:
-    branches:
-      - develop
-      - main
+    branches: [main, develop]
 
 jobs:
-  ci:
+  tests:
+    name: Pest (${{ matrix.database }})
     runs-on: ubuntu-latest
 
+    strategy:
+      fail-fast: false
+      matrix:
+        # SQLite is fast; PostgreSQL proves the queries work on the real database.
+        database: [sqlite, pgsql]
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: clinicflow_test
+          POSTGRES_USER: clinicflow
+          POSTGRES_PASSWORD: secret
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U clinicflow"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+      - uses: shivammathur/setup-php@v2
         with:
-          php-version: 8.4
+          php-version: '8.4'
+          extensions: pdo_pgsql, pdo_sqlite
           tools: composer:v2
-          coverage: xdebug
+          coverage: none
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'npm'
+          cache: npm
 
-      - name: Install Node Dependencies
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Install Node dependencies
         run: npm ci
 
-      - name: Create SQLite Database
-        run: touch database/database.sqlite
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
 
-      - name: Install Dependencies
-        run: composer install --no-interaction --prefer-dist --optimize-autoloader
-
-      - name: Copy Environment File
-        run: cp .env.example .env
-
-      - name: Generate Application Key
-        run: php artisan key:generate
-
-      - name: Publish Ziggy Configuration
-        run: php artisan ziggy:generate
-
-      - name: Build Assets
+      - name: Build assets
         run: npm run build
 
-      - name: Tests
-        run: ./vendor/bin/pest
+      - name: Run tests
+        run: ./vendor/bin/pest --parallel
+        env:
+          DB_CONNECTION: ${{ matrix.database }}
+          DB_HOST: 127.0.0.1
+          DB_PORT: 5432
+          DB_DATABASE: ${{ matrix.database == 'pgsql' && 'clinicflow_test' || ':memory:' }}
+          DB_USERNAME: clinicflow
+          DB_PASSWORD: secret

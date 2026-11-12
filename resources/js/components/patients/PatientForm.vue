@@ -8,13 +8,16 @@ import type { InertiaForm } from '@inertiajs/vue3';
 import { Link } from '@inertiajs/vue3';
 import { LoaderCircle } from 'lucide-vue-next';
 
-defineProps<{
+const props = defineProps<{
     form: InertiaForm<PatientFormData>;
     canEditNotes: boolean;
     submitLabel: string;
 }>();
 
 const emit = defineEmits<{ submit: [] }>();
+
+// The parent owns this Inertia form object; we edit its fields in place.
+const model = props.form;
 
 const today = new Date().toISOString().slice(0, 10);
 const selectClass =
@@ -26,42 +29,42 @@ const selectClass =
         <div class="grid gap-6 sm:grid-cols-2">
             <div class="grid gap-2">
                 <Label for="first_name">First name</Label>
-                <Input id="first_name" v-model="form.first_name" required autofocus autocomplete="off" />
-                <InputError :message="form.errors.first_name" />
+                <Input id="first_name" v-model="model.first_name" required autofocus autocomplete="off" />
+                <InputError :message="model.errors.first_name" />
             </div>
 
             <div class="grid gap-2">
                 <Label for="last_name">Last name</Label>
-                <Input id="last_name" v-model="form.last_name" required autocomplete="off" />
-                <InputError :message="form.errors.last_name" />
+                <Input id="last_name" v-model="model.last_name" required autocomplete="off" />
+                <InputError :message="model.errors.last_name" />
             </div>
 
             <div class="grid gap-2">
                 <Label for="phone">Phone</Label>
-                <Input id="phone" v-model="form.phone" type="tel" required placeholder="+962 79 000 0000" dir="ltr" />
-                <InputError :message="form.errors.phone" />
+                <Input id="phone" v-model="model.phone" type="tel" required placeholder="+962 79 000 0000" dir="ltr" />
+                <InputError :message="model.errors.phone" />
             </div>
 
             <div class="grid gap-2">
                 <Label for="email">Email <span class="text-muted-foreground">(optional)</span></Label>
-                <Input id="email" v-model="form.email" type="email" placeholder="patient@example.com" />
-                <InputError :message="form.errors.email" />
+                <Input id="email" v-model="model.email" type="email" placeholder="patient@example.com" />
+                <InputError :message="model.errors.email" />
             </div>
 
             <div class="grid gap-2">
                 <Label for="date_of_birth">Date of birth</Label>
-                <Input id="date_of_birth" v-model="form.date_of_birth" type="date" :max="today" />
-                <InputError :message="form.errors.date_of_birth" />
+                <Input id="date_of_birth" v-model="model.date_of_birth" type="date" :max="today" />
+                <InputError :message="model.errors.date_of_birth" />
             </div>
 
             <div class="grid gap-2">
                 <Label for="gender">Gender</Label>
-                <select id="gender" v-model="form.gender" :class="selectClass">
+                <select id="gender" v-model="model.gender" :class="selectClass">
                     <option value="">Not specified</option>
                     <option value="male">Male</option>
                     <option value="female">Female</option>
                 </select>
-                <InputError :message="form.errors.gender" />
+                <InputError :message="model.errors.gender" />
             </div>
         </div>
 
@@ -69,17 +72,17 @@ const selectClass =
             <Label for="notes">Medical notes</Label>
             <textarea
                 id="notes"
-                v-model="form.notes"
+                v-model="model.notes"
                 rows="5"
                 class="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                 placeholder="Allergies, chronic conditions, current medication…"
             />
-            <InputError :message="form.errors.notes" />
+            <InputError :message="model.errors.notes" />
         </div>
 
         <div class="flex items-center gap-3">
-            <Button type="submit" :disabled="form.processing">
-                <LoaderCircle v-if="form.processing" class="h-4 w-4 animate-spin" />
+            <Button type="submit" :disabled="model.processing">
+                <LoaderCircle v-if="model.processing" class="h-4 w-4 animate-spin" />
                 {{ submitLabel }}
             </Button>
             <Button variant="ghost" as-child>

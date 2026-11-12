@@ -45,6 +45,9 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
                 'clinic' => fn () => $request->user()?->clinic?->only('id', 'name', 'slug'),
+                'can' => fn () => [
+                    'manageClinic' => (bool) $request->user()?->can('manage-clinic'),
+                ],
             ],
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
